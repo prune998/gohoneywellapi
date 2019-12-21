@@ -1,4 +1,4 @@
-package gohoneywellapi
+package hwapi
 
 import (
 	"context"
@@ -13,16 +13,12 @@ import (
 
 const hwAPIURL string = "https://api.honeywell.com"
 
-type honeywellapi struct {
-	client *http.Client
-	config *oauth2.Config
+type Honeywellapi struct {
+	Client *http.Client
+	Config *oauth2.Config
 }
 
-// NewHW connect to Honeywell Developper API
-// if the token is provided, just use it
-func NewHW(key, secret, code, accessToken, refreshToken string) (*honeywellapi, error) {
-	ctx := context.Background()
-
+func New(key, secret string) *Honeywellapi {
 	conf := &oauth2.Config{
 		ClientID:     key,
 		ClientSecret: secret,
@@ -35,6 +31,17 @@ func NewHW(key, secret, code, accessToken, refreshToken string) (*honeywellapi, 
 		},
 	}
 
+	return &Honeywellapi{
+		Config: conf,
+		Client: &http.Client{},
+	}
+}
+
+// Auth do the real oauth/token auth
+func (hw *Honeywellapi) Auth(code, accessToken, refreshToken string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
 	if accessToken != "" {
 		token := &oauth2.Token{
 			AccessToken:  accessToken,
@@ -42,40 +49,36 @@ func NewHW(key, secret, code, accessToken, refreshToken string) (*honeywellapi, 
 			Expiry:       time.Now(),
 		}
 
-		client := conf.Client(ctx, token)
+		client := hw.Config.Client(ctx, token)
 
-		return &honeywellapi{
-			client: client,
-			config: conf,
-		}, nil
+		hw.Client = client
+
+		return nil
 	}
 
 	if code == "" {
-		url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline)
+		url := hw.Config.AuthCodeURL("state", oauth2.AccessTypeOffline)
 		fmt.Printf("Visit the URL for the auth dialog then add --code on the commandline: %v\n", url)
 
-		return nil, errors.New("please provide the `code` on the command line with --code")
+		return errors.New("please provide the `code` on the command line with --code")
 	}
 
-	token, err := conf.Exchange(ctx, code)
+	token, err := hw.Config.Exchange(ctx, code)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	fmt.Printf("Please keep your Bearer and Refresh Token for future use: [%v,%v]\n", token.AccessToken, token.RefreshToken)
 
-	client := conf.Client(ctx, token)
-
-	return &honeywellapi{
-		client: client,
-		config: conf,
-	}, nil
+	client := hw.Config.Client(ctx, token)
+	hw.Client = client
+	return nil
 
 }
 
-func (hw *honeywellapi) GetLocation() {
+func (hw *Honeywellapi) GetLocation() {
 	// the client will update its token if it's expired
-	resp, err := hw.client.Get(hwAPIURL + "/v2/locations?apikey=" + hw.config.ClientID)
+	resp, err := hw.Client.Get(hwAPIURL + "/v2/locations?apikey=" + hw.Config.ClientID)
 	if err != nil {
 		panic(err)
 	}

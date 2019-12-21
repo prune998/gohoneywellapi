@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/namsral/flag"
-	"github.com/prune998/gohoneywellapi"
+	hwapi "github.com/prune998/gohoneywellapi"
 	"github.com/sirupsen/logrus"
 )
 
@@ -48,8 +48,11 @@ func main() {
 		"state": "OK",
 	}).Infof("app started, authenticating")
 
+	// init
+	hwapi := hwapi.New(*clientKey, *clientSecret)
+
 	// do auth
-	hwapi, err := gohoneywellapi.NewHW(*clientKey, *clientSecret, *clientCode, *token, *refreshToken)
+	err = hwapi.Auth(*clientCode, *token, *refreshToken)
 	if err != nil {
 		logger.WithFields(logrus.Fields{
 			"state": "error",

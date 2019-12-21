@@ -11,7 +11,6 @@ golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 # golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 golang.org/x/oauth2
-golang.org/x/oauth2/clientcredentials
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20190422165155-953cdadca894
 golang.org/x/sys/unix
