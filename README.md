@@ -6,7 +6,7 @@ basic implementation to use the Honeywell API for *T* compatible devices (T9, T1
 
 First you need to register on the Honeywell API portal at <https://developer.honeywellhome.com/user/register>
 
-Once done, you have to create a new application. This will give you access to a `Consumer Key` and a `Consumet Secret`
+Once done, you have to create a new application. This will give you access to a `Consumer Key` and a `Consumer Secret`
 ![Honeywell app creation](https://raw.githubusercontent.com/prune998/gohoneywellapi/master/docs/pictures/hwApp.png)
 
 You also need to register your devices (thermostat) on the Honeywell Application, iPhone or Android. You will be asked to create an account, which is different from the one you juste created for the API.
