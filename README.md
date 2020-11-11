@@ -32,8 +32,21 @@ The webpage will redirect you to some URL like
 
 ```https://api.honeywell.com/oauth2/app/none?code=qwerty&scope=```
 
-Note the code down (`qwerty` in this example). You will need it along your Key and Secret to access the API and get your Bearer Token.
+Note the code down (`qwerty` in this example). You will need it along your Key and Secret to access the API and get your Bearer Token. Restart the app with the code:
 
+```
+./gohoneywellapid -key=apikey -secret=apisecret -code qwerty
+
+Please keep your Bearer and Refresh Token for future use: [sdfsdfsdf,qweqweqwe]
+```
+
+The next time, you can just use the token and refresh token like:
+
+```
+./gohoneywellapid -key=apikey -secret=apisecret -code qwerty
+
+Please keep your Bearer and Refresh Token for future use: [sdfsdfsdf,qweqweqwe]
+```
 ## References
 
 1. Honeywell Developper site : <https://developer.honeywellhome.com/content/getting-started-guide>

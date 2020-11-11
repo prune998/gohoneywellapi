@@ -2,6 +2,7 @@ package hwapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -37,50 +38,97 @@ func New(key, secret string) *Honeywellapi {
 	}
 }
 
-// Auth do the real oauth/token auth
-func (hw *Honeywellapi) Auth(code, accessToken, refreshToken string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+// AuthFromToken create the http client with a provided token
+func (hw *Honeywellapi) AuthFromToken(token *oauth2.Token) error {
+	ctx := context.Background()
 
-	if accessToken != "" {
+	client := hw.Config.Client(ctx, token)
+	hw.Client = client
+
+	return nil
+}
+
+// Auth do the real oauth/token auth
+func (hw *Honeywellapi) Auth(code, accessToken, refreshToken string) (*oauth2.Token, error) {
+	ctx := context.Background()
+
+	if accessToken != "" && refreshToken != "" {
 		token := &oauth2.Token{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 			Expiry:       time.Now(),
+			// token.TokenType = "",
 		}
 
 		client := hw.Config.Client(ctx, token)
-
 		hw.Client = client
 
-		return nil
+		return token, nil
 	}
 
 	if code == "" {
 		url := hw.Config.AuthCodeURL("state", oauth2.AccessTypeOffline)
 		fmt.Printf("Visit the URL for the auth dialog then add --code on the commandline: %v\n", url)
 
-		return errors.New("please provide the `code` on the command line with --code")
+		return &oauth2.Token{}, errors.New("please provide the `code` on the command line with --code")
 	}
 
 	token, err := hw.Config.Exchange(ctx, code)
 	if err != nil {
-		return err
+		return token, err
 	}
 
-	fmt.Printf("Please keep your Bearer and Refresh Token for future use: [%v,%v]\n", token.AccessToken, token.RefreshToken)
+	fmt.Printf("Please keep your Bearer and Refresh Token for future use: [%v,%v, %v ,%v]\n", token.AccessToken, token.RefreshToken, token.Expiry, token.TokenType)
 
 	client := hw.Config.Client(ctx, token)
 	hw.Client = client
-	return nil
+	return token, nil
 
 }
 
-func (hw *Honeywellapi) GetLocation() {
+func (hw *Honeywellapi) GetLocations() ([]TSerie, error) {
 	// the client will update its token if it's expired
-	resp, err := hw.Client.Get(hwAPIURL + "/v2/locations?apikey=" + hw.Config.ClientID)
+	url := hwAPIURL + "/v2/locations?apikey=" + hw.Config.ClientID
+
+	body, err := hw.getData(url)
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+
+	// put data into a Tserie struct
+	var m []TSerie
+	err = json.Unmarshal(body, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (hw *Honeywellapi) GetSchedule(locationID, deviceID string) (*Schedule, error) {
+	// the client will update its token if it's expired
+	url := hwAPIURL + "/v2/devices/schedule/" + deviceID + "?apikey=" + hw.Config.ClientID + "&type=regular&locationId=" + locationID
+
+	body, err := hw.getData(url)
+	if err != nil {
+		return nil, err
+	}
+
+	// put data into a Schedule struct
+	var s Schedule
+	err = json.Unmarshal(body, &s)
+	if err != nil {
+		return nil, err
+	}
+
+	return &s, nil
+}
+
+func (hw *Honeywellapi) getData(url string) ([]byte, error) {
+	// the client will update its token if it's expired
+	resp, err := hw.Client.Get(url)
+	if err != nil {
+		return nil, err
 	}
 
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -88,10 +136,8 @@ func (hw *Honeywellapi) GetLocation() {
 
 	// If response code is 200 it was successful
 	if resp.StatusCode == 200 {
-		fmt.Println("The request was successful. Response below:")
-		fmt.Println(string(body))
-	} else {
-		fmt.Println("Could not perform request to the endpoind. Response below:")
-		fmt.Println(string(body))
+		return body, nil
 	}
+
+	return nil, errors.New("HTTP error")
 }
