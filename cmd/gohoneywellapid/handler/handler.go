@@ -7,11 +7,9 @@ import (
 	hwapi "github.com/prune998/gohoneywellapi"
 )
 
-type (
-	Handler struct {
-		HwData *hwapi.TSerie
-	}
-)
+type Handler struct {
+	HwData *hwapi.TSerie
+}
 
 func (h *Handler) GetLocation(c echo.Context) (err error) {
 

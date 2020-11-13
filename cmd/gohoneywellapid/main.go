@@ -12,7 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/namsral/flag"
 	hwapi "github.com/prune998/gohoneywellapi"
-	"github.com/prune998/gohoneywellapi/handler"
+	"github.com/prune998/gohoneywellapi/cmd/gohoneywellapid/handler"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
@@ -65,7 +65,7 @@ func main() {
 	}
 
 	// init oauth and honneywell API
-	hwapi := hwapi.New(*clientKey, *clientSecret)
+	myHwapi := hwapi.New(*clientKey, *clientSecret)
 
 	// init token
 	var tok *oauth2.Token
@@ -93,7 +93,7 @@ func main() {
 			"expire": tok.Expiry,
 		}).Infof("using token from config file")
 
-		err = hwapi.AuthFromToken(tok)
+		err = myHwapi.AuthFromToken(tok)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"state": "error",
@@ -107,7 +107,7 @@ func main() {
 		}).Infof("using token from command line")
 
 		// do auth
-		tok, err = hwapi.Auth(*clientCode, *token, *refreshToken)
+		tok, err = myHwapi.Auth(*clientCode, *token, *refreshToken)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"state": "error",
@@ -130,13 +130,14 @@ func main() {
 	p.Use(e)
 
 	// Initialize handler
-	h := &handler.Handler{HwAPI: &hwapi.TSerie{}}
+	h := &handler.Handler{HwData: &hwapi.TSerie{}}
 
 	// routes
 	apiGroup := e.Group("/api")
-	apiGroup.GET("/locations", h.Getlocation).Name = "get-locations"
+	apiGroup.GET("/locations", h.GetLocation).Name = "get-locations"
+	apiGroup.GET("/devices/:id", h.GetDevice).Name = "get-device"
 
-	apiGroup.GET("/device/:id", func(c echo.Context) error {
+	apiGroup.GET("/devices", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	}).Name = "get-device"
 	e.Static("/", "frontend/dist")
@@ -155,7 +156,7 @@ func main() {
 		var code string
 		fmt.Scan(&code)
 
-		locations, err := hwapi.GetLocations()
+		locations, err := myHwapi.GetLocations()
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"state": "error",
@@ -171,7 +172,7 @@ func main() {
 				fmt.Printf("temp for %s: in=%.2f | out=%.2f\n", device.Name, device.IndoorTemperature, device.OutdoorTemperature)
 				fmt.Printf("humidity for %s: in=%d | out=%d\n", device.Name, device.IndoorHumidity, device.DisplayedOutdoorHumidity)
 
-				s, err := hwapi.GetSchedule(strconv.Itoa(j.LocationID), device.DeviceID)
+				s, err := myHwapi.GetSchedule(strconv.Itoa(j.LocationID), device.DeviceID)
 				if err != nil {
 					logger.WithFields(logrus.Fields{
 						"state":      "error",
