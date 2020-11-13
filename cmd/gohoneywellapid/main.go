@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 
@@ -130,16 +129,16 @@ func main() {
 	p.Use(e)
 
 	// Initialize handler
-	h := &handler.Handler{HwData: &hwapi.TSerie{}}
+	h := &handler.Handler{Hw: myHwapi}
 
 	// routes
 	apiGroup := e.Group("/api")
-	apiGroup.GET("/locations", h.GetLocation).Name = "get-locations"
-	apiGroup.GET("/devices/:id", h.GetDevice).Name = "get-device"
+	apiGroup.GET("/locations", h.GetLocations).Name = "get-locations"
+	apiGroup.GET("/location/:locationid", h.GetLocation).Name = "get-locations"
+	apiGroup.GET("/location/:locationid/devices", h.GetDevices).Name = "get-devices"
+	apiGroup.GET("/location/:locationid/device/:deviceid", h.GetDevice).Name = "get-device"
+	// apiGroup.GET("/location/:locationid/device/:deviceid/schedule", h.GetSchedule).Name = "get-schedule"
 
-	apiGroup.GET("/devices", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	}).Name = "get-device"
 	e.Static("/", "frontend/dist")
 
 	// Start server
