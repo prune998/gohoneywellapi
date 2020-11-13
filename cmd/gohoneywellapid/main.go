@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 
+	"github.com/labstack/echo-contrib/prometheus"
+	"github.com/labstack/echo/v4"
 	"github.com/namsral/flag"
 	hwapi "github.com/prune998/gohoneywellapi"
+	"github.com/prune998/gohoneywellapi/handler"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
@@ -85,7 +89,8 @@ func main() {
 	if tok.Valid() {
 
 		logger.WithFields(logrus.Fields{
-			"state": "OK",
+			"state":  "OK",
+			"expire": tok.Expiry,
 		}).Infof("using token from config file")
 
 		err = hwapi.AuthFromToken(tok)
@@ -115,6 +120,36 @@ func main() {
 	logger.WithFields(logrus.Fields{
 		"state": "OK",
 	}).Infof("oAuth2 done, type anything")
+
+	e := echo.New()
+
+	e.HideBanner = true
+	e.Debug = true
+	// Enable metrics middleware
+	p := prometheus.NewPrometheus("echo", nil)
+	p.Use(e)
+
+	// Initialize handler
+	h := &handler.Handler{HwAPI: &hwapi.TSerie{}}
+
+	// routes
+	apiGroup := e.Group("/api")
+	apiGroup.GET("/locations", h.Getlocation).Name = "get-locations"
+
+	apiGroup.GET("/device/:id", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!")
+	}).Name = "get-device"
+	e.Static("/", "frontend/dist")
+
+	// Start server
+	go func() {
+		if err := e.Start(":1323"); err != nil {
+			e.Logger.Info("shutting down the server")
+		}
+	}()
+
+	// quit := make(chan os.Signal)
+	// signal.Notify(quit, os.Interrupt)
 
 	for {
 		var code string
@@ -177,13 +212,12 @@ func tokenFromFile(file string) (*oauth2.Token, error) {
 
 // Saves a token to a file path.
 func saveToken(path string, token *oauth2.Token) {
-	fmt.Printf("Saving credential file to: %s\n", path)
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalf("Unable to cache oauth token: %v", err)
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(token)
+	_ = json.NewEncoder(f).Encode(token)
 }
 
 // Celsius2Fahrenheit
