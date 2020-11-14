@@ -29,7 +29,7 @@ var (
 	token        = flag.String("token", "", "your Bearer Token from a previous auth")
 	refreshToken = flag.String("refreshtoken", "", "Refresh Token from a previous auth")
 
-	// httpPort   = flag.Int("httpPort", 8080, "Port for service HTTP content")
+	serverBind = flag.String("server", ":8080", "Server:Port for HTTP content")
 	configFile = flag.String("confifile", "./config.json", "path of JSON config file")
 
 	// conf ConfigData
@@ -125,7 +125,7 @@ func main() {
 	e.HideBanner = true
 	e.Debug = true
 	// Enable metrics middleware
-	p := prometheus.NewPrometheus("echo", nil)
+	p := prometheus.NewPrometheus("hwapi", nil)
 	p.Use(e)
 
 	// Initialize handler
@@ -134,16 +134,16 @@ func main() {
 	// routes
 	apiGroup := e.Group("/api")
 	apiGroup.GET("/locations", h.GetLocations).Name = "get-locations"
-	apiGroup.GET("/location/:locationid", h.GetLocation).Name = "get-locations"
+	apiGroup.GET("/location/:locationid", h.GetLocation).Name = "get-location"
 	apiGroup.GET("/location/:locationid/devices", h.GetDevices).Name = "get-devices"
 	apiGroup.GET("/location/:locationid/device/:deviceid", h.GetDevice).Name = "get-device"
-	// apiGroup.GET("/location/:locationid/device/:deviceid/schedule", h.GetSchedule).Name = "get-schedule"
+	apiGroup.GET("/location/:locationid/device/:deviceid/schedule", h.GetSchedule).Name = "get-schedule"
 
 	e.Static("/", "frontend/dist")
 
 	// Start server
 	go func() {
-		if err := e.Start(":1323"); err != nil {
+		if err := e.Start(*serverBind); err != nil {
 			e.Logger.Info("shutting down the server")
 		}
 	}()
@@ -169,7 +169,7 @@ func main() {
 
 			for _, device := range j.Devices {
 				fmt.Printf("temp for %s: in=%.2f | out=%.2f\n", device.Name, device.IndoorTemperature, device.OutdoorTemperature)
-				fmt.Printf("humidity for %s: in=%d | out=%d\n", device.Name, device.IndoorHumidity, device.DisplayedOutdoorHumidity)
+				fmt.Printf("humidity for %s: in=%.2f | out=%.2f\n", device.Name, device.IndoorHumidity, device.DisplayedOutdoorHumidity)
 
 				s, err := myHwapi.GetSchedule(strconv.Itoa(j.LocationID), device.DeviceID)
 				if err != nil {
@@ -185,7 +185,7 @@ func main() {
 					fmt.Printf("\t%s:\n", daySchedule.Day)
 					for _, period := range daySchedule.Periods {
 						if !period.IsCancelled {
-							fmt.Printf("\t\t%s -> %.2f\n", period.StartTime, Fahrenheit2Celsius(period.HeatSetPoint))
+							fmt.Printf("\t\t%s\t%s -> %.2f\n", period.PeriodName, period.StartTime, Fahrenheit2Celsius(period.HeatSetPoint))
 						}
 					}
 				}

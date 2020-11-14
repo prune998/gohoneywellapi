@@ -74,3 +74,15 @@ func (h *Handler) GetDevice(c echo.Context) (err error) {
 	}
 	return c.JSON(http.StatusNotFound, nil)
 }
+
+func (h *Handler) GetSchedule(c echo.Context) (err error) {
+	locationID := c.Param("locationid")
+	deviceID := c.Param("deviceid")
+
+	s, err := h.Hw.GetSchedule(locationID, deviceID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	return c.JSON(http.StatusOK, s)
+}

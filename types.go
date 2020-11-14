@@ -36,13 +36,13 @@ type Group struct {
 
 type Device struct {
 	Groups                   []Group `json:"groups"`
-	DisplayedOutdoorHumidity int     `json:"displayedOutdoorHumidity,omitempty"`
+	DisplayedOutdoorHumidity float64 `json:"displayedOutdoorHumidity,omitempty"`
 	VacationHold             struct {
-		VacationStart string `json:"vacationStart"`
-		VacationEnd   string `json:"vacationEnd"`
-		HeatSetpoint  int    `json:"heatSetpoint"`
-		CoolSetpoint  int    `json:"coolSetpoint"`
-		Enabled       bool   `json:"enabled"`
+		VacationStart string  `json:"vacationStart"`
+		VacationEnd   string  `json:"vacationEnd"`
+		HeatSetpoint  float64 `json:"heatSetpoint"`
+		CoolSetpoint  float64 `json:"coolSetpoint"`
+		Enabled       bool    `json:"enabled"`
 	} `json:"vacationHold,omitempty"`
 
 	CurrentSchedulePeriod struct {
@@ -105,29 +105,29 @@ type Device struct {
 	AllowedModes           []string `json:"allowedModes,omitempty"`
 	Deadband               int      `json:"deadband,omitempty"`
 	HasDualSetpointStatus  bool     `json:"hasDualSetpointStatus,omitempty"`
-	MinHeatSetpoint        int      `json:"minHeatSetpoint,omitempty"`
-	MaxHeatSetpoint        int      `json:"maxHeatSetpoint,omitempty"`
-	MinCoolSetpoint        int      `json:"minCoolSetpoint,omitempty"`
-	MaxCoolSetpoint        int      `json:"maxCoolSetpoint,omitempty"`
+	MinHeatSetpoint        float64  `json:"minHeatSetpoint,omitempty"`
+	MaxHeatSetpoint        float64  `json:"maxHeatSetpoint,omitempty"`
+	MinCoolSetpoint        float64  `json:"minCoolSetpoint,omitempty"`
+	MaxCoolSetpoint        float64  `json:"maxCoolSetpoint,omitempty"`
 	ChangeableValues       struct {
-		Mode                     string `json:"mode"`
-		HeatSetpoint             int    `json:"heatSetpoint"`
-		CoolSetpoint             int    `json:"coolSetpoint"`
-		ThermostatSetpointStatus string `json:"thermostatSetpointStatus"`
-		NextPeriodTime           string `json:"nextPeriodTime"`
-		EndHeatSetpoint          int    `json:"endHeatSetpoint"`
-		EndCoolSetpoint          int    `json:"endCoolSetpoint"`
-		HeatCoolMode             string `json:"heatCoolMode"`
+		Mode                     string  `json:"mode"`
+		HeatSetpoint             float64 `json:"heatSetpoint"`
+		CoolSetpoint             float64 `json:"coolSetpoint"`
+		ThermostatSetpointStatus string  `json:"thermostatSetpointStatus"`
+		NextPeriodTime           string  `json:"nextPeriodTime"`
+		EndHeatSetpoint          float64 `json:"endHeatSetpoint"`
+		EndCoolSetpoint          float64 `json:"endCoolSetpoint"`
+		HeatCoolMode             string  `json:"heatCoolMode"`
 	} `json:"changeableValues,omitempty"`
 	OperationStatus struct {
 		Mode                  string `json:"mode"`
 		FanRequest            bool   `json:"fanRequest"`
 		CirculationFanRequest bool   `json:"circulationFanRequest"`
 	} `json:"operationStatus,omitempty"`
-	IndoorHumidity       int    `json:"indoorHumidity,omitempty"`
-	IndoorHumidityStatus string `json:"indoorHumidityStatus,omitempty"`
-	DeviceModel          string `json:"deviceModel,omitempty"`
-	WaterPresent         bool   `json:"waterPresent,omitempty"`
+	IndoorHumidity       float64 `json:"indoorHumidity,omitempty"`
+	IndoorHumidityStatus string  `json:"indoorHumidityStatus,omitempty"`
+	DeviceModel          string  `json:"deviceModel,omitempty"`
+	WaterPresent         bool    `json:"waterPresent,omitempty"`
 }
 
 type User struct {
@@ -208,4 +208,26 @@ type Period struct {
 		PriorityType  string `json:"priorityType"`
 		SelectedRooms []int  `json:"selectedRooms"`
 	} `json:"priority"`
+}
+
+type weekDay int
+
+const (
+	Monday weekDay = iota
+	Tuesday
+	Wednesday
+	Thursday
+	Friday
+	Saturday
+	Sunday
+)
+
+var weekDays = [...]string{
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday",
+	"Sunday",
 }

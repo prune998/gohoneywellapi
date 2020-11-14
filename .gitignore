@@ -18,3 +18,4 @@ cmd/gohoneywellapid/gohoneywellapid
 cmd/gohoneywellapid/config.json
 cmd/gohoneywellapid/example.json
 cmd/gohoneywellapid/schedule.json
+cmd/gohwctl/gohwctl
