@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/imroc/req"
 	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/namsral/flag"
@@ -30,17 +32,11 @@ var (
 	refreshToken = flag.String("refreshtoken", "", "Refresh Token from a previous auth")
 
 	serverBind = flag.String("server", ":8080", "Server:Port for HTTP content")
-	configFile = flag.String("confifile", "./config.json", "path of JSON config file")
+	configFile = flag.String("configfile", "./config.json", "path of JSON config file")
+	tokenFile  = flag.String("tokenfile", "./token.json", "path of JSON file containing the saved token")
 
-	// conf ConfigData
+	peakHoursURL = flag.String("peakhoururl", "http://localhost:8022/peakhours", "URL to get the Peak Hours JSON content")
 )
-
-// type ConfigData struct {
-// 	AccessToken  string    `json:"access_token"`
-// 	TokenType    string    `json:"token_type,omitempty"`
-// 	RefreshToken string    `json:"refresh_token,omitempty"`
-// 	Expiry       time.Time `json:"expiry,omitempty"`
-// }
 
 func main() {
 	flag.Parse()
@@ -63,24 +59,50 @@ func main() {
 		os.Exit(0)
 	}
 
-	// init oauth and honneywell API
+	// load the config file
+	config, err := parseConfig(*configFile)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"state": "error",
+			"err":   err,
+		}).Errorf("can't load config file %s", *configFile)
+		os.Exit(1)
+	}
+
+	// Query the PeakHour service
+	peaks, err := getPeakHours(*peakHoursURL)
+	if err != nil {
+		logger.WithFields(logrus.Fields{
+			"state": "error",
+			"err":   err,
+		}).Errorf("can't grab Peak Hours from server URL %s", *peakHoursURL)
+		os.Exit(1)
+	}
+
+	logger.WithFields(logrus.Fields{
+		"state": "OK",
+		"peaks": peaks,
+		"conf":  config,
+	}).Infof("done reading all files")
+
+	// init oauth and honeywellAPI
 	myHwapi := hwapi.New(*clientKey, *clientSecret)
 
 	// init token
 	var tok *oauth2.Token
 
-	// open the config file
-	if *configFile != "" {
-		tok, err = tokenFromFile(*configFile)
+	// grab the last valid token from the backup file
+	if *tokenFile != "" {
+		tok, err = tokenFromFile(*tokenFile)
 		if err != nil {
 			logger.WithFields(logrus.Fields{
 				"state": "error",
-				"file":  *configFile,
-			}).Errorf("error opening config file, continuing with arguments")
+				"file":  *tokenFile,
+			}).Errorf("error opening token file, continuing with arguments")
 		}
 		logger.WithFields(logrus.Fields{
 			"state": "OK",
-			"file":  *configFile,
+			"file":  *tokenFile,
 		}).Infof("done reading json file")
 	}
 
@@ -113,7 +135,7 @@ func main() {
 			}).Errorf("error during auth : %v", err)
 			os.Exit(1)
 		}
-		saveToken(*configFile, tok)
+		saveToken(*tokenFile, tok)
 	}
 
 	logger.WithFields(logrus.Fields{
@@ -228,4 +250,27 @@ func Celsius2Fahrenheit(c float64) float64 {
 // Fahrenheit2Celsius
 func Fahrenheit2Celsius(f float64) float64 {
 	return ((f - 32) * 5 / 9)
+}
+
+// getPeakHours do a REST call to get the peak hours json
+func getPeakHours(url string) ([]PeakHourPeriod, error) {
+
+	var s []PeakHourPeriod
+
+	r, err := req.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.ToJSON(&s)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+type PeakHourPeriod struct {
+	StartTime time.Time `json:"start"`
+	EndTime   time.Time `json:"end"`
 }

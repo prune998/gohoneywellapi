@@ -14,12 +14,13 @@ import (
 
 const hwAPIURL string = "https://api.honeywell.com"
 
-type Honeywellapi struct {
+type HoneywellAPI struct {
 	Client *http.Client
 	Config *oauth2.Config
 }
 
-func New(key, secret string) *Honeywellapi {
+// New create a new HoneywellAPI resource
+func New(key, secret string) *HoneywellAPI {
 	conf := &oauth2.Config{
 		ClientID:     key,
 		ClientSecret: secret,
@@ -32,14 +33,14 @@ func New(key, secret string) *Honeywellapi {
 		},
 	}
 
-	return &Honeywellapi{
+	return &HoneywellAPI{
 		Config: conf,
 		Client: &http.Client{},
 	}
 }
 
 // AuthFromToken create the http client with a provided token
-func (hw *Honeywellapi) AuthFromToken(token *oauth2.Token) error {
+func (hw *HoneywellAPI) AuthFromToken(token *oauth2.Token) error {
 	ctx := context.Background()
 
 	client := hw.Config.Client(ctx, token)
@@ -49,7 +50,7 @@ func (hw *Honeywellapi) AuthFromToken(token *oauth2.Token) error {
 }
 
 // Auth do the real oauth/token auth
-func (hw *Honeywellapi) Auth(code, accessToken, refreshToken string) (*oauth2.Token, error) {
+func (hw *HoneywellAPI) Auth(code, accessToken, refreshToken string) (*oauth2.Token, error) {
 	ctx := context.Background()
 
 	if accessToken != "" && refreshToken != "" {
@@ -86,7 +87,7 @@ func (hw *Honeywellapi) Auth(code, accessToken, refreshToken string) (*oauth2.To
 
 }
 
-func (hw *Honeywellapi) GetLocations() ([]TSerie, error) {
+func (hw *HoneywellAPI) GetLocations() ([]TSerie, error) {
 	// the client will update its token if it's expired
 	url := hwAPIURL + "/v2/locations?apikey=" + hw.Config.ClientID
 
@@ -105,7 +106,7 @@ func (hw *Honeywellapi) GetLocations() ([]TSerie, error) {
 	return m, nil
 }
 
-func (hw *Honeywellapi) GetSchedule(locationID, deviceID string) (*Schedule, error) {
+func (hw *HoneywellAPI) GetSchedule(locationID, deviceID string) (*Schedule, error) {
 	// the client will update its token if it's expired
 	url := hwAPIURL + "/v2/devices/schedule/" + deviceID + "?apikey=" + hw.Config.ClientID + "&type=regular&locationId=" + locationID
 
@@ -124,7 +125,8 @@ func (hw *Honeywellapi) GetSchedule(locationID, deviceID string) (*Schedule, err
 	return &s, nil
 }
 
-func (hw *Honeywellapi) getData(url string) ([]byte, error) {
+// getData effectively GET the remote API
+func (hw *HoneywellAPI) getData(url string) ([]byte, error) {
 	// the client will update its token if it's expired
 	resp, err := hw.Client.Get(url)
 	if err != nil {

@@ -15,7 +15,8 @@
 # vendor/
 
 cmd/gohoneywellapid/gohoneywellapid
-cmd/gohoneywellapid/config.json
+cmd/gohoneywellapid/token.json
 cmd/gohoneywellapid/example.json
 cmd/gohoneywellapid/schedule.json
 cmd/gohwctl/gohwctl
+cmd/peakhoursd/peakhoursd

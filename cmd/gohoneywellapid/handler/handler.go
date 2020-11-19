@@ -9,9 +9,10 @@ import (
 )
 
 type Handler struct {
-	Hw *hwapi.Honeywellapi
+	Hw *hwapi.HoneywellAPI
 }
 
+//GetLocations get all the data from locations
 func (h *Handler) GetLocations(c echo.Context) (err error) {
 	locations, err := h.Hw.GetLocations()
 	if err != nil {
@@ -21,6 +22,7 @@ func (h *Handler) GetLocations(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, locations)
 }
 
+// GetLocation get specific location data
 func (h *Handler) GetLocation(c echo.Context) (err error) {
 	locationid := c.Param("locationid")
 
@@ -37,6 +39,7 @@ func (h *Handler) GetLocation(c echo.Context) (err error) {
 	return c.JSON(http.StatusNotFound, nil)
 }
 
+// GetDevices get all the devices for a location
 func (h *Handler) GetDevices(c echo.Context) (err error) {
 	locationID := c.Param("locationid")
 
@@ -53,6 +56,7 @@ func (h *Handler) GetDevices(c echo.Context) (err error) {
 	return c.JSON(http.StatusNotFound, nil)
 }
 
+// GetDevice get data of a specific device
 func (h *Handler) GetDevice(c echo.Context) (err error) {
 	locationID := c.Param("locationid")
 	deviceID := c.Param("deviceid")
@@ -75,6 +79,7 @@ func (h *Handler) GetDevice(c echo.Context) (err error) {
 	return c.JSON(http.StatusNotFound, nil)
 }
 
+// GetSchedule get the scedule applied on a specific device
 func (h *Handler) GetSchedule(c echo.Context) (err error) {
 	locationID := c.Param("locationid")
 	deviceID := c.Param("deviceid")
