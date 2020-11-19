@@ -9,3 +9,10 @@ It then start watching a Peak Hour API and re-program the thermostats when neede
 
 # Usage
 
+## Config file
+
+```json
+{
+  
+}
+```
