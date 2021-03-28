@@ -20,3 +20,4 @@ cmd/gohoneywellapid/example.json
 cmd/gohoneywellapid/schedule.json
 cmd/gohwctl/gohwctl
 cmd/peakhoursd/peakhoursd
+cmd/peakHourUpdater/peakHourUpdater
